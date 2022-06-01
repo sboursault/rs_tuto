@@ -7,17 +7,16 @@ use rand::Rng;
 pub struct Pokemon {
     pub name: String,
     pub hp: i32,
-    pub mp: Option<i32>
+    pub mp: Option<i32>,
 }
 
 impl Pokemon {
-
     /// Create a Pokemon
     pub fn new(name: &str, hp: i32) -> Pokemon {
         Pokemon {
-            name : name.to_string(),
-            hp : hp,
-            mp : Some(5)
+            name: name.to_string(),
+            hp: hp,
+            mp: Some(5),
         }
     }
 
@@ -28,17 +27,28 @@ impl Pokemon {
 }
 
 trait Fighter {
-    fn get_hp(self) -> i32;
-    fn strength(self) -> i32;
+    fn get_hp(&self) -> i32;
+    fn strength(&self) -> i32;
 }
 
+
 impl Fighter for Pokemon {
-    fn get_hp(self) -> i32 {
+    fn get_hp(&self) -> i32 {  // without &, get_hp() would take ownership of self...
         self.hp
     }
-    fn strength(self) -> i32 {
+    fn strength(&self) -> i32 {  // without &, strength() would take ownership of self...
         let i = rand::thread_rng().gen_range(0..100);
         i
+    }
+}
+
+trait Comparable {
+    fn compare_to(self: &Self, other: &Self) -> bool;  // 'Self' is the type that implements Comparable
+}
+
+impl Comparable for Pokemon {
+    fn compare_to(self: &Pokemon, other: &Pokemon) -> bool {
+        return self.get_hp() == other.get_hp()
     }
 }
 
@@ -55,10 +65,7 @@ fn evolve(p: &mut Pokemon) {
 
 #[cfg(test)] // Only compiles when running tests
 mod tests {
-    use super::Pokemon;
-    use super::Fighter;
-    use super::say_hello;
-    use super::evolve;
+    use super::*;
 
     #[test]
     fn verify_greet() {
@@ -94,4 +101,26 @@ mod tests {
         say_hello(&taupi);  // works because we just pass a reference to say_hello
         assert_eq!(taupi.name, "Triopikeur");
     }
+
+    #[test]
+    fn verify_copy() {
+        let n = 7;
+        let o = n;  // `o` is a copy of `n`
+        let p = n;  // same. `n` is neither moved nor borrowed. (Can't work with a Pokemon since it misses the Copy trait)
+        assert_eq!(o, 7);
+        assert_eq!(p, 7);
+    }
+
+    #[test]
+    fn verify_compare() {
+        let taupi1 = Pokemon::new("Taupiqueur", 10);
+        let taupi2 = Pokemon::new("Taupiqueur", 10);
+        let trio = Pokemon::new("Triopikeur", 20);
+
+        assert_eq!(taupi1.compare_to(&taupi2), true);
+        assert_eq!(taupi1.compare_to(&trio), false);
+    }
+
+    // TODO create a Bag<T>
+
 }

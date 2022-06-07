@@ -1,4 +1,6 @@
 use rand::Rng;
+use std::fmt::{Formatter, Display};
+use std::fmt;
 
 #[derive(Debug)]  // see also #[derive(Debug, Copy, Clone)]
 // Pokemons can't derive Copy because it contains a String (String, like Vec and any other variable-sized container, contains a pointer to some variable amount of heap memory)
@@ -26,6 +28,14 @@ impl Pokemon {
     }
 }
 
+
+impl Display for Pokemon {
+    // Display is similar to Debug, but Display is for user-facing output, and so cannot be derived.
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.name)
+    }
+}
+
 trait Fighter {
     fn get_hp(&self) -> i32;
     fn strength(&self) -> i32;
@@ -48,7 +58,7 @@ trait Comparable {
 
 impl Comparable for Pokemon {
     fn compare_to(self: &Pokemon, other: &Pokemon) -> bool {
-        return self.get_hp() == other.get_hp()
+        return self.get_hp() == other.get_hp();
     }
 }
 
@@ -60,6 +70,18 @@ fn evolve(p: &mut Pokemon) {
     if p.name == "Taupiqueur" {
         p.name = "Triopikeur".to_string();
     }
+}
+
+
+fn concat<T: Display>(array: &[T]) -> String {
+    // why returning a String (and not a &str) ?
+    // basically, &str is for immutatble strings, String is for mutable strings
+    // BUT you cannot return a &str if you've allocated the String in the function. (https://stackoverflow.com/a/43080280)
+    let str = array
+        .iter()// transform to iterator (with unknown size)
+        .map(|x| format!("{}", x))  // map
+        .fold(String::new(), |a, b| a + ", " + b.as_str());  // reduce
+    return String::from(&str[2..]); // remove the 2 first characters and return a String
 }
 
 
@@ -121,6 +143,17 @@ mod tests {
         assert_eq!(taupi1.compare_to(&trio), false);
     }
 
-    // TODO create a Bag<T>
+    #[test]
+    fn verify_display_trait() {
+        let taupi = Pokemon::new("Taupiqueur", 10);
+        assert_eq!(format!("{}", taupi), "Taupiqueur");
+    }
+
+    #[test]
+    fn verify_concat() {
+        let array = [Pokemon::new("Taupiqueur", 10), Pokemon::new("Triopikeur", 20), Pokemon::new("Colossinge", 15)];
+        assert_eq!(concat(&array), "Taupiqueur, Triopikeur, Colossinge");
+    }
+
 
 }
